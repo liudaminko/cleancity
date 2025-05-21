@@ -9,6 +9,7 @@ import SwiftUI
 import GoogleSignIn
 import GoogleSignInSwift
 import FirebaseCore
+import FirebaseAuth
 import UIKit
 
 @main
@@ -16,6 +17,7 @@ struct Clean_CityApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @AppStorage("isLoggedIn") var isLoggedIn: Bool = false
     @State private var isLaunching = true
+    @StateObject private var profileViewModel = ProfileViewModel()
 
     var body: some Scene {
         WindowGroup {
@@ -29,8 +31,17 @@ struct Clean_CityApp: App {
             } else {
                 if isLoggedIn {
                     AppNavigationView()
+                        .environmentObject(profileViewModel)
+                        .onAppear {
+                            Task {
+                                if profileViewModel.profile == nil,
+                                   let uid = Auth.auth().currentUser?.uid {
+                                    await profileViewModel.fetchProfile(uid: uid)
+                                }
+                            }
+                        }
                 } else {
-                    GreetView()     
+                    GreetView()
                 }
             }
         }

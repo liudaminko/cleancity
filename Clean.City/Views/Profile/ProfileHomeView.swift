@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileHomeView: View {
     @State private var showPointsView = false
+    @EnvironmentObject private var profileVM: ProfileViewModel
 
     var body: some View {
         ScrollView {
@@ -45,15 +46,31 @@ struct ProfileHomeView: View {
 
     var header: some View {
         VStack(spacing: 8) {
-            Image("profile_photo")
-                .resizable()
+            if let urlString = profileVM.profile?.avatarUrl,
+               let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image.resizable()
+                    } else if phase.error != nil {
+                        Image("profile_photo").resizable()
+                    } else {
+                        ProgressView()
+                    }
+                }
                 .aspectRatio(contentMode: .fill)
                 .frame(width: 126, height: 126)
                 .clipShape(Circle())
+            } else {
+                Image("profile_photo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 126, height: 126)
+                    .clipShape(Circle())
+            }
 
-            Text("Людмила М.")
+            Text(profileVM.profile?.displayName ?? "")
                 .font(.system(size: 26, weight: .bold))
-            Text("@LiudaaM")
+            Text("@\(profileVM.profile?.username ?? "")")
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
@@ -89,7 +106,7 @@ struct ProfileHomeView: View {
 
     var actions: some View {
         HStack {
-            ProfileStatView(label: "Львів", value: "Місто")
+            ProfileStatView(label: profileVM.profile?.city ?? "-", value: "Місто")
             Divider().frame(height: 40)
             ProfileStatView(label: "3", value: "Підписки")
             Divider().frame(height: 40)
